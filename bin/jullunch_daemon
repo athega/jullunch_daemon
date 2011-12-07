@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+ENV['BUNDLE_GEMFILE'] = File.expand_path('../../Gemfile', __FILE__)
+
+require "rubygems" unless defined?(Gem)
+require "bundler/setup"
+require "forever"
+require_relative "../lib/jullunch_daemon"
+
+path = File.expand_path('~/.jullunch_daemon')
+Dir.mkdir(path) unless Dir.exist?(path)
+
+Forever.run do
+  dir path
+
+  on_ready do
+    JullunchDaemon.setup
+    JullunchDaemon.notify "Jullunch Daemon", "was started..."
+  end
+
+  every 5.seconds do
+    JullunchDaemon.run
+  end
+
+  on_exit do
+    JullunchDaemon.notify "Jullunch Daemon", "was stopped..."
+  end
+end
