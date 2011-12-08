@@ -20,4 +20,6 @@ Gem::Specification.new do |s|
   s.require_paths = %w[lib]
 
   s.add_dependency "foreverb", "0.3.0.f"
+  s.add_dependency "yajl-ruby", "~> 1.1.0"
+  s.add_dependency "rest-client", "~> 1.6.7"
 end
