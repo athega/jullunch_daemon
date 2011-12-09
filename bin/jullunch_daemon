@@ -17,12 +17,12 @@ Forever.run do
     JullunchDaemon.notify "Jullunch Daemon", "was started..."
   end
 
-  every 5.seconds do
-    JullunchDaemon.update_tweets
-  end
-  
-  every 10.seconds do
+  every 8.seconds do
     JullunchDaemon.update_images
+  end
+
+  every 10.seconds do
+    JullunchDaemon.update_tweets
   end
 
   on_exit do

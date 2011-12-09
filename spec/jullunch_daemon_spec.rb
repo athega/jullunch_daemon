@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 require 'minitest/pride'
 require 'minitest/spec'
 require 'minitest/autorun'
@@ -30,13 +32,26 @@ describe JullunchDaemon do
   it 'retrieves the url for Twitter search' do
     test_query = '?q=TEST'
 
-    JullunchDaemon.stubs(:twitter_query).returns(test_query)
+    JullunchDaemon.stubs(:tweets_query).returns(test_query)
     JullunchDaemon.search_twitter_url.must_equal @base_twitter_url + test_query
   end
 
   it 'changes the url for Twitter search after a sucessful response' do
     refresh_url = '?since_id=123&q=%23athegajul'
-    body = to_json({ refresh_url: refresh_url  })
+    results = [
+      {
+        from_user: 'athega',
+        from_user_id: 16748304,
+        from_user_name: "Athega",
+        id: 142626039942754300,
+        iso_language_code: "sv",
+        profile_image_url: "http://a1.twimg.com/profile_images/61956417/athega_e_normal.png",
+        source: "&lt;a href=&quot;http://twitter.com/#!/download/iphone&quot; rel=&quot;nofollow&quot;&gt;Twitter for iPhone&lt;/a&gt;",
+        text: "Snart dags för årets Jullunch på Athega. #athegajul",
+      }
+    ]
+
+    body = to_json({ refresh_url: refresh_url, results: results })
 
     RestClient.stubs(:get).returns(stub(code: 200, to_str: body))
 

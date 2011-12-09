@@ -9,16 +9,16 @@ module JullunchDaemon
 
   CONFIG = File.expand_path("~/.jullunch_daemon/config.yaml")
 
-  attr_reader :twitter_query
+  attr_reader :tweets_query
 
   def setup
     unless File.exist?(CONFIG)
       Dir.mkdir File.dirname(CONFIG) unless File.exist? File.dirname(CONFIG)
 
       default_config = {
-        twitter: {
+        tweets: {
           query: '?q=%23athegajul',
-          json_file: '~/Desktop/twitter.json'
+          json_file: '~/Desktop/tweets.json'
         },
         images: {
           source_path: '~/Desktop/images',
@@ -32,15 +32,12 @@ module JullunchDaemon
     end
 
     @config = YAML.load_file(CONFIG)
-    @twitter_query = @config[:twitter][:query]
 
+    @tweets_query       = @config[:tweets][:query]
+    @tweets_json_file   = File.expand_path(@config[:tweets][:json_file])
     @images_source_path = File.expand_path(@config[:images][:source_path])
-    @images_glob_path   = "#{@images_source_path}#{@config[:images][:glob]}"
     @images_json_file   = File.expand_path(@config[:images][:json_file])
-  end
-
-  def run
-    update_images
+    @images_glob_path   = "#{@images_source_path}#{@config[:images][:glob]}"
   end
 
   def update_tweets
@@ -51,9 +48,33 @@ module JullunchDaemon
     else
       data = json(response.to_str)
 
-      @twitter_query = data['refresh_url']
-      notify('Updated tweets', search_twitter_url)
+      new_tweets = data['results'].map { |t|
+        {
+          from_user:          t['from_user'],
+          from_user_id:       t['from_user_id'],
+          from_user_name:     t['from_user_name'],
+          id:                 t['id'],
+          iso_language_code:  t['iso_language_code'],
+          profile_image_url:  t['profile_image_url'].
+                                gsub('normal.', 'reasonably_small.'),
+          source:             t['source'],
+          text:               t['text']
+        }
+      }
+
+      if new_tweets.count > 0
+        tweets_json = to_json(new_tweets + cached_tweets)
+        File.open(@tweets_json_file, "w") { |f| f.write tweets_json }
+        notify('Updated tweets', search_twitter_url)
+      end
+
+      @tweets_query = data['refresh_url']
     end
+  end
+
+  def cached_tweets(count = 20)
+    tweets = json(IO.read(@tweets_json_file)) if File.exist?(@tweets_json_file)
+    tweets.nil? ? [] : tweets[0, count]
   end
 
   def update_images
@@ -64,7 +85,7 @@ module JullunchDaemon
     notify('Updated images', images.count)
   end
 
-  def latest_images
+  def latest_images()
     base_url = @config[:images][:base_url]
 
     latest_files(@images_glob_path).map { |path|
@@ -81,7 +102,7 @@ module JullunchDaemon
   end
 
   def search_twitter_url
-    "http://search.twitter.com/search.json#{twitter_query}"
+    "http://search.twitter.com/search.json#{tweets_query}"
   end
 
   def random(size = 10000)
