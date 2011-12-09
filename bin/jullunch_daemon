@@ -18,7 +18,11 @@ Forever.run do
   end
 
   every 5.seconds do
-    JullunchDaemon.run
+    JullunchDaemon.update_tweets
+  end
+  
+  every 10.seconds do
+    JullunchDaemon.update_images
   end
 
   on_exit do
