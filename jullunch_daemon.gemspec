@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
                     "like updating the list of tweets, keeping track of " +
                     "check ins and uploaded images."
 
-  s.files         = Dir["**/*"].reject { |f| File.directory?(f) || f == "Gemfile.lock" }
+  s.files         = Dir["**/*"]
   s.executables   = %w[jullunch_daemon]
   s.require_paths = %w[lib]
 
