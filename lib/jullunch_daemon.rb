@@ -1,6 +1,7 @@
 require 'yaml' unless defined?(YAML)
 require "yajl"
 require "rest_client"
+require "twitter-text"
 
 require_relative "jullunch_daemon/version"
 
@@ -49,40 +50,42 @@ module JullunchDaemon
       data = json(response.to_str)
 
       new_tweets = data['results'].map { |t|
+        url         = "https://twitter.com/#{t['from_user']}/"
+        status_url  = url + "status/#{t['id']}"
+        text        = Twitter::Autolink.auto_link(t['text'])
+
         {
           from_user:          t['from_user'],
-          from_user_id:       t['from_user_id'],
+          url:                url,
+          status_url:         status_url,
           from_user_name:     t['from_user_name'],
           id:                 t['id'],
           iso_language_code:  t['iso_language_code'],
           profile_image_url:  t['profile_image_url'].
                                 gsub('normal.', 'reasonably_small.'),
-          source:             t['source'],
-          text:               t['text']
+          text:               Twitter::Autolink.html_escape(text)
         }
       }
 
       if new_tweets.count > 0
-        tweets_json = to_json(new_tweets + cached_tweets)
+        tweets_json = to_json((new_tweets + cached_tweets)[0, 15])
         File.open(@tweets_json_file, "w") { |f| f.write tweets_json }
         notify('Updated tweets', search_twitter_url)
       end
 
       @tweets_query = data['refresh_url']
     end
+  rescue Exception => e
+    notify('Exception', e.message)
   end
 
-  def cached_tweets(count = 20)
+  def cached_tweets(count = 15)
     tweets = json(IO.read(@tweets_json_file)) if File.exist?(@tweets_json_file)
     tweets.nil? ? [] : tweets[0, count]
   end
 
   def update_images
-    images = latest_images
-
-    File.open(@images_json_file, "w") { |f| f.write to_json(images) }
-
-    notify('Updated images', images.count)
+    File.open(@images_json_file, "w") { |f| f.write to_json(latest_images) }
   end
 
   def latest_images()

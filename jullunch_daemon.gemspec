@@ -22,5 +22,6 @@ Gem::Specification.new do |s|
   s.add_dependency "foreverb", "0.3.0.f"
   s.add_dependency "yajl-ruby", "~> 1.1.0"
   s.add_dependency "rest-client", "~> 1.6.7"
+  s.add_dependency "twitter-text", "~> 1.4.15"
   s.add_development_dependency "mocha", "~> 0.10.0"
 end
