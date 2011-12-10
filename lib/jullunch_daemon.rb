@@ -92,7 +92,8 @@ module JullunchDaemon
     base_url = @config[:images][:base_url]
 
     latest_files(@images_glob_path).map { |path|
-      { url: "#{base_url}#{File.basename(path)}?#{random}", path: path }
+      url = "#{base_url}#{File.basename(path)}?size=#{File.size(path)}"
+      { url: url, path: path }
     }
   end
 
@@ -106,10 +107,6 @@ module JullunchDaemon
 
   def search_twitter_url
     "http://search.twitter.com/search.json#{tweets_query}"
-  end
-
-  def random(size = 10000)
-    (rand()*size).to_i
   end
 
   def json(str)
