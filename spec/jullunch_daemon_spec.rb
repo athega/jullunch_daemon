@@ -61,8 +61,5 @@ describe JullunchDaemon do
     JullunchDaemon.search_twitter_url.must_equal @base_twitter_url + refresh_url
   end
 
-  it 'updates images' do
-
-    -> { JullunchDaemon.update_images }.must_output "=> Updated images: 3\n"
-  end
+  it 'updates images'
 end
