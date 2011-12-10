@@ -21,7 +21,7 @@ Forever.run do
     JullunchDaemon.update_images
   end
 
-  every 10.seconds do
+  every 15.seconds do
     JullunchDaemon.update_tweets
   end
 
