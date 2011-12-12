@@ -55,6 +55,7 @@ module JullunchDaemon
         text        = Twitter::Autolink.auto_link(t['text'])
 
         {
+          created_at:         t['created_at'],
           from_user:          t['from_user'],
           url:                url,
           status_url:         status_url,
