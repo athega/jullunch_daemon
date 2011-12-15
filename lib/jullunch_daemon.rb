@@ -89,7 +89,7 @@ module JullunchDaemon
     File.open(@images_json_file, "w") { |f| f.write to_json(latest_images) }
   end
 
-  def latest_images()
+  def latest_images
     base_url = @config[:images][:base_url]
 
     latest_files(@images_glob_path).map { |path|
