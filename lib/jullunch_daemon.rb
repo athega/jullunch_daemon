@@ -10,35 +10,39 @@ module JullunchDaemon
 
   CONFIG = File.expand_path("~/.jullunch_daemon/config.yaml")
 
+  DEFAULT_CONFIG = {
+    tweets: {
+      query: '?q=%23athegajul',
+      json_file: '~/Desktop/tweets.json'
+    },
+    images: {
+      source_path:          '~/Desktop/images',
+      json_file:            '~/Desktop/images.json',
+      all_images_json_file: '~/Desktop/all_images.json',
+      glob:                 '/hatified*',
+      base_url:             'http://assets.athega.se/jullunch/tomtelizer/'
+    }
+  }
+
   attr_reader :tweets_query
 
   def setup
+    @config               = load_config
+    @tweets_query         = @config[:tweets][:query]
+    @tweets_json_file     = File.expand_path(@config[:tweets][:json_file])
+    @images_source_path   = File.expand_path(@config[:images][:source_path])
+    @images_json_file     = File.expand_path(@config[:images][:json_file])
+    @all_images_json_file = File.expand_path(@config[:images][:all_images_json_file])
+    @images_glob_path     = "#{@images_source_path}#{@config[:images][:glob]}"
+  end
+
+  def load_config
     unless File.exist?(CONFIG)
       Dir.mkdir File.dirname(CONFIG) unless File.exist? File.dirname(CONFIG)
-
-      default_config = {
-        tweets: {
-          query: '?q=%23athegajul',
-          json_file: '~/Desktop/tweets.json'
-        },
-        images: {
-          source_path: '~/Desktop/images',
-          json_file: '~/Desktop/images.json',
-          glob:        '/hatified*',
-          base_url:    'http://assets.athega.se/jullunch/tomtelizer/'
-        }
-      }
-
-      File.open(CONFIG, "w") { |f| f.write default_config.to_yaml }
+      File.open(CONFIG, "w") { |f| f.write DEFAULT_CONFIG.to_yaml }
     end
 
-    @config = YAML.load_file(CONFIG)
-
-    @tweets_query       = @config[:tweets][:query]
-    @tweets_json_file   = File.expand_path(@config[:tweets][:json_file])
-    @images_source_path = File.expand_path(@config[:images][:source_path])
-    @images_json_file   = File.expand_path(@config[:images][:json_file])
-    @images_glob_path   = "#{@images_source_path}#{@config[:images][:glob]}"
+    YAML.load_file(CONFIG)
   end
 
   def update_tweets
@@ -89,10 +93,14 @@ module JullunchDaemon
     File.open(@images_json_file, "w") { |f| f.write to_json(latest_images) }
   end
 
-  def latest_images
+  def update_all_images
+    File.open(@all_images_json_file, "w") { |f| f.write to_json(latest_images(9999)) }
+  end
+
+  def latest_images(count = 20)
     base_url = @config[:images][:base_url]
 
-    latest_files(@images_glob_path).map { |path|
+    latest_files(@images_glob_path, count).map { |path|
       url = "#{base_url}#{File.basename(path)}?size=#{File.size(path)}"
       { url: url, path: path }
     }

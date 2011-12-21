@@ -16,6 +16,8 @@ describe JullunchDaemon do
     @base_twitter_url     = 'http://search.twitter.com/search.json'
     @initial_twitter_url  = @base_twitter_url + '?q=%23athegajul'
 
+    JullunchDaemon.stubs(:load_config).returns(JullunchDaemon::DEFAULT_CONFIG)
+
     JullunchDaemon.setup
   end
 

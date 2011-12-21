@@ -25,6 +25,10 @@ Forever.run do
     JullunchDaemon.update_tweets
   end
 
+  every 2.minutes do
+    JullunchDaemon.update_all_images
+  end
+
   on_exit do
     JullunchDaemon.notify "Jullunch Daemon", "was stopped..."
   end
