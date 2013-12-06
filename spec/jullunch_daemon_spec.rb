@@ -3,7 +3,7 @@
 require 'minitest/pride'
 require 'minitest/spec'
 require 'minitest/autorun'
-require 'mocha'
+require 'mocha/setup'
 
 require_relative '../lib/jullunch_daemon'
 
