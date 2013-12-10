@@ -1,7 +1,6 @@
 require 'yaml' unless defined?(YAML)
 require "yajl"
-require "rest_client"
-require "twitter-text"
+require "twitter"
 
 require_relative "jullunch_daemon/version"
 
@@ -12,8 +11,10 @@ module JullunchDaemon
 
   DEFAULT_CONFIG = {
     tweets: {
-      query: '?q=%23athegajul',
-      json_file: '~/Desktop/tweets.json'
+      query: '#athegajul',
+      json_file: '~/Desktop/tweets.json',
+      consumer_key: 'foo',
+      consumer_secret: 'bar'
     },
     images: {
       source_path:          '~/Desktop/images',
@@ -29,11 +30,17 @@ module JullunchDaemon
   def setup
     @config               = load_config
     @tweets_query         = @config[:tweets][:query]
+
     @tweets_json_file     = File.expand_path(@config[:tweets][:json_file])
     @images_source_path   = File.expand_path(@config[:images][:source_path])
     @images_json_file     = File.expand_path(@config[:images][:json_file])
     @all_images_json_file = File.expand_path(@config[:images][:all_images_json_file])
     @images_glob_path     = "#{@images_source_path}#{@config[:images][:glob]}"
+
+    @twitter_client = Twitter::REST::Client.new({
+      consumer_key:    @config[:tweets][:consumer_key],
+      consumer_secret: @config[:tweets][:consumer_secret]
+    })
   end
 
   def load_config
@@ -46,40 +53,27 @@ module JullunchDaemon
   end
 
   def update_tweets
-    response = RestClient.get(search_twitter_url)
-
-    if response.code == 420
-      notify('Tweets', 'Rate limited')
-    else
-      data = json(response.to_str)
-
-      new_tweets = data['results'].map { |t|
-        url         = "https://twitter.com/#{t['from_user']}/"
-        status_url  = url + "status/#{t['id']}"
-        text        = Twitter::Autolink.auto_link(t['text'])
-
-        {
-          created_at:         t['created_at'],
-          from_user:          t['from_user'],
-          url:                url,
-          status_url:         status_url,
-          from_user_name:     t['from_user_name'],
-          id:                 t['id'],
-          iso_language_code:  t['iso_language_code'],
-          profile_image_url:  t['profile_image_url'].
-                                gsub('normal.', 'reasonably_small.'),
-          text:               Twitter::Autolink.html_escape(text)
-        }
+    new_tweets = @twitter_client.search(tweets_query).map do |t|
+      {
+        created_at:         t.created_at,
+        from_user:          t.user.user_name,
+        url:                t.user.url,
+        status_url:         t.url,
+        from_user_name:     t.user.name,
+        id:                 t.id,
+        iso_language_code:  t.lang,
+        profile_image_url:  t.user.profile_image_url
       }
-
-      if new_tweets.count > 0
-        tweets_json = to_json((new_tweets + cached_tweets)[0, 15])
-        File.open(@tweets_json_file, "w") { |f| f.write tweets_json }
-        notify('Updated tweets', search_twitter_url)
-      end
-
-      @tweets_query = data['refresh_url']
     end
+
+    if new_tweets.count > 0
+      tweets_json = to_json((new_tweets + cached_tweets)[0, 15])
+
+      File.open(@tweets_json_file, "w") { |f| f.write tweets_json }
+      notify('Updated tweets', tweets_query)
+    end
+
+    notify('update tweets')
   rescue Exception => e
     notify('Exception', e.message)
   end
@@ -112,10 +106,6 @@ module JullunchDaemon
 
   def notify(title, text)
     puts "=> #{title}: #{text}"
-  end
-
-  def search_twitter_url
-    "http://search.twitter.com/search.json#{tweets_query}"
   end
 
   def json(str)
