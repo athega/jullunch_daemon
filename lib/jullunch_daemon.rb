@@ -25,7 +25,7 @@ module JullunchDaemon
     }
   }
 
-  attr_reader :tweets_query
+  attr_reader :tweets_query, :twitter_client
 
   def setup
     @config               = load_config
@@ -53,7 +53,9 @@ module JullunchDaemon
   end
 
   def update_tweets
-    new_tweets = @twitter_client.search(tweets_query).map do |t|
+    options = { result_type: "recent" }
+
+    new_tweets = @twitter_client.search(tweets_query, options).map do |t|
       {
         created_at:         t.created_at,
         from_user:          t.user.user_name,
@@ -62,7 +64,8 @@ module JullunchDaemon
         from_user_name:     t.user.name,
         id:                 t.id,
         iso_language_code:  t.lang,
-        profile_image_url:  t.user.profile_image_url
+        profile_image_url:  t.user.profile_image_url,
+        text:               t.full_text
       }
     end
 
@@ -70,12 +73,11 @@ module JullunchDaemon
       tweets_json = to_json((new_tweets + cached_tweets)[0, 15])
 
       File.open(@tweets_json_file, "w") { |f| f.write tweets_json }
+
       notify('Updated tweets', tweets_query)
     end
-
-    notify('update tweets')
   rescue Exception => e
-    notify('Exception', e.message)
+    notify('Exception', e.inspect)
   end
 
   def cached_tweets(count = 15)
