@@ -70,19 +70,14 @@ module JullunchDaemon
     end
 
     if new_tweets.count > 0
-      tweets_json = to_json((new_tweets + cached_tweets)[0, 15])
+      tweets_json = to_json(new_tweets)
 
       File.open(@tweets_json_file, "w") { |f| f.write tweets_json }
 
-      notify('Updated tweets', tweets_query)
+      notify("Updated #{new_tweets.count} tweets for query", tweets_query)
     end
   rescue Exception => e
     notify('Exception', e.inspect)
-  end
-
-  def cached_tweets(count = 15)
-    tweets = json(IO.read(@tweets_json_file)) if File.exist?(@tweets_json_file)
-    tweets.nil? ? [] : tweets[0, count]
   end
 
   def update_images
