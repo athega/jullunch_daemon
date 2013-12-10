@@ -53,7 +53,7 @@ module JullunchDaemon
   end
 
   def update_tweets
-    options = { result_type: "recent" }
+    options = { result_type: "recent", count: 30 }
 
     new_tweets = @twitter_client.search(tweets_query, options).map do |t|
       {
