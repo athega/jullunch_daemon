@@ -13,7 +13,7 @@ Forever.run do
     JullunchDaemon.notify "Jullunch Daemon", "was started..."
   end
 
-  every 4.seconds do
+  every 2.seconds do
     JullunchDaemon.update_images
   end
 
