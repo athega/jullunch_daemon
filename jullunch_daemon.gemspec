@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.require_paths = %w[lib]
 
   s.add_dependency "foreverb", "~> 0.3.2"
-  s.add_dependency "yajl-ruby", "~> 1.1.0"
+  s.add_dependency "yajl-ruby", "~> 1.3.1"
   s.add_dependency "twitter", "~> 5.1.1"
   s.add_development_dependency "minitest", "~> 5.1"
   s.add_development_dependency "mocha", "~> 0.14"
